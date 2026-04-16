@@ -23,12 +23,20 @@ DATABASE_SCHEMA = [
     "CREATE TABLE IF NOT EXISTS users ("
     "id INTEGER PRIMARY KEY AUTOINCREMENT, "
     "email TEXT NOT NULL UNIQUE, "
-<<<<<<< HEAD
     "password TEXT NOT NULL, "
     "name TEXT, "
     "phone TEXT, "
     "location TEXT, "
     "meter_id TEXT"
+    ")",
+    "CREATE TABLE IF NOT EXISTS payments ("
+    "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+    "timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+    "amount REAL NOT NULL, "
+    "status TEXT NOT NULL, "
+    "method TEXT NOT NULL, "
+    "reference TEXT NOT NULL, "
+    "description TEXT"
     ")",
 ]
 

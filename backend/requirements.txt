@@ -1,3 +1,8 @@
 Flask>=2.0
 Flask-Cors>=3.0
 bcrypt>=4.0
+langchain
+langchain-openai
+requests
+pandas
+scikit-learn  # For the forecasting math

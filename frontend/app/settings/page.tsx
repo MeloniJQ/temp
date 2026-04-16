@@ -2,32 +2,39 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-<<<<<<< HEAD
 import { useTheme } from 'next-themes'
-=======
->>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
 import { useAuth } from '@/context/auth-context'
 import { Header } from '@/components/header'
-import { Moon, Sun } from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { Laptop, Moon, Sun } from 'lucide-react'
+
+const themeOptions = [
+  {
+    value: 'system',
+    label: 'System',
+    description: 'Follow your operating system preference',
+    icon: Laptop,
+  },
+  {
+    value: 'light',
+    label: 'Light',
+    description: 'Bright and clean display mode',
+    icon: Sun,
+  },
+  {
+    value: 'dark',
+    label: 'Dark',
+    description: 'Low-light display mode',
+    icon: Moon,
+  },
+]
 
 export default function SettingsPage() {
   const { user, isLoading, updateDailyLimit } = useAuth()
-<<<<<<< HEAD
-  const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [dailyLimit, setDailyLimit] = useState<number>(50)
   const [isSaving, setIsSaving] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-=======
-  const router = useRouter()
-  const [dailyLimit, setDailyLimit] = useState<number>(50)
-  const [isDarkMode, setIsDarkMode] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
->>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
+  const { theme, setTheme, resolvedTheme } = useTheme()
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -45,13 +52,11 @@ export default function SettingsPage() {
     setIsSaving(false)
   }
 
-<<<<<<< HEAD
-  if (!user || !mounted) {
-=======
   if (!user) {
->>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
     return null
   }
+
+  const currentTheme = theme === 'system' ? 'system' : resolvedTheme === 'dark' ? 'dark' : 'light'
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,7 +68,6 @@ export default function SettingsPage() {
           <p className="text-muted-foreground mt-2">Manage your energy monitoring preferences</p>
         </div>
 
-        {/* Daily Limit Settings */}
         <div className="mb-6 rounded-lg border border-border bg-card p-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Energy Limits</h2>
 
@@ -83,7 +87,7 @@ export default function SettingsPage() {
                   className="flex-1 h-2 bg-border rounded-lg appearance-none cursor-pointer"
                 />
                 <div className="w-24 px-4 py-2 rounded-lg border border-border bg-input text-foreground text-center font-semibold">
-                  {dailyLimit} Units
+                  {dailyLimit} kWh
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
@@ -102,80 +106,41 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Theme Settings */}
         <div className="mb-6 rounded-lg border border-border bg-card p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Appearance</h2>
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Appearance</h2>
+              <p className="text-muted-foreground mt-1">Choose your preferred theme and keep the interface consistent.</p>
+            </div>
+            <ThemeToggle />
+          </div>
 
-          <div className="space-y-3">
-<<<<<<< HEAD
-                <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-border/50 cursor-pointer transition-colors">
-              <input
-                type="radio"
-                name="theme"
-                checked={theme === 'dark'}
-                onChange={() => setTheme('dark')}
-=======
-            <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-border/50 cursor-pointer transition-colors">
-              <input
-                type="radio"
-                name="theme"
-                checked={isDarkMode}
-                onChange={() => setIsDarkMode(true)}
->>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
-                className="w-4 h-4"
-              />
-              <Moon size={18} className="text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Dark Mode</p>
-                <p className="text-xs text-muted-foreground">Easier on the eyes at night</p>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-orange-200 hover:bg-orange-50/50 cursor-pointer transition-all duration-300 active:scale-[0.98]">
-              <input
-                type="radio"
-                name="theme"
-<<<<<<< HEAD
-                checked={theme === 'light'}
-                onChange={() => setTheme('light')}
-                className="w-4 h-4 accent-orange-400"
-              />
-              <Sun size={18} className={theme === 'light' ? "text-orange-500" : "text-slate-400"} />
-=======
-                checked={!isDarkMode}
-                onChange={() => setIsDarkMode(false)}
-                className="w-4 h-4 accent-orange-400" 
-              />
-              <Sun size={18} className={!isDarkMode ? "text-orange-500" : "text-slate-400"} />
->>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
-              <div>
-                <p className="text-sm font-medium text-slate-700">Light Mode</p>
-                <p className="text-xs text-slate-500">Standard viewing experience</p>
-              </div>
-            </label>
-<<<<<<< HEAD
-            <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-100/80 cursor-pointer transition-all duration-300 active:scale-[0.98]">
-              <input
-                type="radio"
-                name="theme"
-                checked={theme === 'system'}
-                onChange={() => setTheme('system')}
-                className="w-4 h-4 accent-slate-700"
-              />
-              <span className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-muted text-muted-foreground">
-                A
-              </span>
-              <div>
-                <p className="text-sm font-medium text-slate-700">System Default</p>
-                <p className="text-xs text-slate-500">Follow OS theme preference</p>
-              </div>
-            </label>
-=======
->>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
+          <div className="grid gap-3 sm:grid-cols-3">
+            {themeOptions.map((option) => {
+              const Icon = option.icon
+              const isActive = currentTheme === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setTheme(option.value)}
+                  className={`flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${
+                    isActive ? 'border-primary bg-primary/10' : 'border-border bg-input'
+                  }`}
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted text-foreground">
+                    <Icon size={18} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">{option.label}</p>
+                    <p className="text-sm text-muted-foreground">{option.description}</p>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        {/* Notification Settings */}
         <div className="mb-6 rounded-lg border border-border bg-card p-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Notifications</h2>
 
@@ -195,7 +160,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Save Button */}
         <div className="flex gap-3">
           <button
             onClick={handleSaveSettings}

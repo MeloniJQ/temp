@@ -9,13 +9,54 @@ from utils import (
     monthly_estimate_units,
     format_reading,
 )
+from uuid import uuid4
 import bcrypt
+import random
+import threading
 
 app = Flask(__name__)
 
-CORS(app)
+CORS(
+    app,
+    supports_credentials=True,
+    resources={r"/*": {"origins": ["http://localhost:3000"]}},
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+)
 
 app.config["DATABASE"] = "backend/data/energy.db"
+
+fake_sensor_data = {
+    "voltage": 230,
+    "current": 5.0,
+    "power": 1150.0,
+    "energy": 1.15,
+    "timestamp": datetime.utcnow().isoformat() + "Z",
+}
+
+
+def refresh_fake_sensor_data():
+    global fake_sensor_data
+
+    voltage = random.randint(210, 239)
+    current = round(random.uniform(1.5, 10.0), 2)
+    power = round(voltage * current, 2)
+    energy = round(power * 0.001, 3)
+
+    fake_sensor_data = {
+        "voltage": voltage,
+        "current": current,
+        "power": power,
+        "energy": energy,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+    }
+
+    threading.Timer(2.0, refresh_fake_sensor_data).start()
+
+
+@app.before_first_request
+def start_fake_sensor_generator():
+    refresh_fake_sensor_data()
 
 
 # -------------------------
@@ -39,6 +80,14 @@ def teardown(exception):
 @app.route("/")
 def home():
     return jsonify({"message": "Backend is running successfully"})
+
+
+# -------------------------
+# FAKE SENSOR DATA
+# -------------------------
+@app.route("/api/data")
+def fake_data():
+    return jsonify(fake_sensor_data)
 
 
 # -------------------------
@@ -187,12 +236,109 @@ def alerts():
             {
                 "id": r["id"],
                 "timestamp": r["timestamp"],
-                "level": r["level"],
-                "message": r["message"]
+                "title": "High usage alert" if r["level"] == "high" else "System alert",
+                "description": r["message"],
+                "severity": "critical" if r["level"] == "high" else "warning",
             }
             for r in rows
         ]
     })
+
+
+# -------------------------
+# NOTIFICATIONS
+# -------------------------
+@app.route("/api/notifications")
+def notifications():
+    db = get_db()
+
+    live_row = db.execute(
+        "SELECT * FROM readings ORDER BY timestamp DESC LIMIT 1"
+    ).fetchone()
+
+    if not live_row:
+        return jsonify({"notifications": ["No live energy data available."]}), 200
+
+    avg_power = db.execute(
+        "SELECT AVG(power) as avg_power FROM readings"
+    ).fetchone()["avg_power"] or 0.0
+
+    notifications = []
+    if live_row["power"] > 1800:
+        notifications.append("High usage detected, consider reducing AC usage and heavy appliance cycles.")
+    elif live_row["power"] > 1200:
+        notifications.append("Usage is elevated; keep an eye on consumption during peak hours.")
+    else:
+        notifications.append("Usage is stable today. Continue maintaining efficient behavior.")
+
+    if live_row["energy_units"] > 30:
+        notifications.append("Daily energy consumption is above the expected trend. Review your meter activity.")
+
+    forecast_units = round(((avg_power + live_row["power"]) / 2) / 1000 * 24, 2)
+    if forecast_units > 50:
+        notifications.append("Forecast shows increasing consumption ahead — schedule appliance usage for off-peak hours.")
+
+    return jsonify({"notifications": notifications}), 200
+
+
+# -------------------------
+# PAYMENTS
+# -------------------------
+@app.route("/api/payments", methods=["GET", "POST"])
+def payments():
+    db = get_db()
+
+    if request.method == "GET":
+        rows = db.execute(
+            "SELECT * FROM payments ORDER BY timestamp DESC LIMIT 20"
+        ).fetchall()
+
+        return jsonify({
+            "payments": [
+                {
+                    "id": r["id"],
+                    "timestamp": r["timestamp"],
+                    "amount": r["amount"],
+                    "status": r["status"],
+                    "method": r["method"],
+                    "reference": r["reference"],
+                    "description": r["description"],
+                }
+                for r in rows
+            ]
+        })
+
+    data = request.get_json(force=True)
+    amount = data.get("amount")
+    method = data.get("method", "card")
+    description = data.get("description", "Bill payment")
+
+    if amount is None or amount <= 0:
+        return jsonify({"error": "Invalid payment amount"}), 400
+
+    success = amount < 10000
+    status = "success" if success else "failed"
+    reference = str(uuid4())
+
+    db.execute(
+        "INSERT INTO payments (amount, status, method, reference, description) VALUES (?, ?, ?, ?, ?)",
+        (amount, status, method, reference, description),
+    )
+    db.commit()
+
+    if not success:
+        return jsonify({"error": "Payment failed due to gateway timeout. Please retry."}), 502
+
+    return jsonify({
+        "message": "Payment recorded successfully",
+        "payment": {
+            "amount": amount,
+            "status": status,
+            "method": method,
+            "reference": reference,
+            "description": description,
+        },
+    }), 201
 
 
 # -------------------------
@@ -257,60 +403,63 @@ def insights():
 
     latest_units = live_row["energy_units"]
     cost = calculate_cost(latest_units)
-
-    forecast_units = round(((avg_power + live_row["power"]) / 2) / 1000 * 24, 3)
+    forecast_units = round(((avg_power + live_row["power"]) / 2) / 1000 * 24, 2)
     forecast_cost = calculate_cost(forecast_units)
 
     status = "normal"
-    if live_row["power"] > 2000 or avg_power > 1800:
+    if live_row["power"] > 2500 or avg_power > 1800:
         status = "high"
-
-    if live_row["power"] > 2500:
+    if live_row["power"] > 3000:
         status = "anomaly"
 
-    weather_conditions = [
-        {"condition": "Sunny", "description": "Clear skies and mild temperatures."},
-        {"condition": "Partly Cloudy", "description": "Some clouds with bright periods."},
-        {"condition": "Cloudy", "description": "Overcast with light winds."},
-        {"condition": "Showers", "description": "Light rain showers expected."},
-        {"condition": "Thunderstorms", "description": "Possible storms and higher humidity."},
+    temp = 24 + min(12, round(live_row["power"] / 250.0))
+    weather_description = (
+        "Hot and humid conditions, ideal for efficient cooling management."
+        if temp >= 32
+        else "Warm weather — pay attention to cooling and ventilation."
+        if temp >= 26
+        else "Mild weather, a good time to reduce AC and rely on natural airflow."
+    )
+
+    weather = [
+        {
+            "day": (datetime.now() + timedelta(days=i)).strftime("%A"),
+            "condition": "Hot" if temp >= 32 else "Warm" if temp >= 26 else "Mild",
+            "description": weather_description,
+            "high": temp + i,
+            "low": temp - 3 + i,
+        }
+        for i in range(1, 4)
     ]
 
-    weather = []
-    now = datetime.now()
-    for i in range(1, 4):
-        forecast = weather_conditions[i % len(weather_conditions)]
-        weather.append({
-            "day": (now + timedelta(days=i)).strftime("%A"),
-            "condition": forecast["condition"],
-            "description": forecast["description"],
-            "high": 28 + i,
-            "low": 18 + i,
-        })
+    suggestions = []
+    notifications = []
 
-    suggestions = [
-        "Shift high-power appliances to off-peak hours.",
-        "Check the meter and connected devices for unexpected load.",
-        "Schedule charging or heavy appliances for late night hours.",
-    ]
+    if status == "anomaly":
+        suggestions.append("Anomaly detected in consumption. Check high-wattage devices and meter connections.")
+        notifications.append("An unusual consumption spike has been observed. Inspect appliances now.")
+    elif status == "high":
+        suggestions.append("Reduce air conditioning and heavy appliance use during peak hours.")
+        notifications.append("High usage detected, consider reducing AC usage.")
+    else:
+        suggestions.append("Usage is stable today. Keep the system optimized and avoid unnecessary loads.")
+        notifications.append("Usage is stable today. Good job maintaining efficient energy habits.")
 
-    notifications = [
-        "If usage stays high, your daily bill could increase significantly.",
-        "A high-usage alert may trigger if power remains above threshold.",
-    ]
+    if temp >= 32:
+        suggestions.append("Use AC at 25°C, close curtains, and run fans for efficient cooling.")
+        notifications.append("Hot weather detected. Smart AC management can save energy.")
+    elif temp >= 26:
+        suggestions.append("Mild weather is ideal for reducing cooling devices and using natural airflow.")
+    else:
+        suggestions.append("Temperatures are mild. Reduce cooling devices and rely on fresh air.")
 
-    if status == "normal":
-        suggestions.insert(0, "Your system is stable. Keep monitoring for sudden spikes.")
-        notifications = ["No urgent alerts detected. Continue normal operations."]
-
-    if status == "high":
-        suggestions.insert(0, "Reduce heavy loads this evening to avoid surging consumption.")
-        notifications.insert(0, "Current power usage is above the preferred threshold.")
+    if forecast_units > latest_units * 1.2:
+        notifications.append("Forecasted consumption is rising. Shift appliances to off-peak periods.")
 
     recommendation = (
         "Reduce heavy load now and shift appliances to off-peak hours."
         if status != "normal"
-        else "Keep monitoring thresholds and maintain current usage levels."
+        else "Maintain current usage and continue efficient habits."
     )
 
     return jsonify({

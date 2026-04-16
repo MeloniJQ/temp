@@ -1,111 +1,217 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 :root {
-  /* Pastel Colorful Palette */
-  --background: 45 25% 95%;      /* Soft Cream */
-  --foreground: 45 10% 20%;      /* Warm Brown */
-  --card: 45 20% 90%;           /* Light Cream */
-  --card-foreground: 45 10% 20%;
-  --primary: 120 40% 50%;        /* Soft Green */
-  --primary-foreground: 45 25% 95%;
-  --secondary: 60 30% 80%;       /* Pastel Yellow */
-  --secondary-foreground: 45 10% 20%;
-  --muted: 45 15% 85%;
-  --muted-foreground: 45 5% 40%;
-  --accent: 300 30% 70%;          /* Pastel Pink */
-  --accent-foreground: 45 10% 20%;
-  --destructive: 0 50% 60%;      /* Soft Red */
-  --destructive-foreground: 45 25% 95%;
-  --border: 45 10% 80%;
-  --input: 45 15% 85%;
-  --ring: 120 40% 50%;
-  --radius: 0.5rem;
+  color-scheme: light;
+  --background: 217 33% 96%;
+  --foreground: 215 18% 16%;
+  --card: 214 26% 100%;
+  --card-foreground: 215 18% 16%;
+  --popover: 214 26% 100%;
+  --popover-foreground: 215 18% 16%;
+  --primary: 154 58% 48%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 42 96% 72%;
+  --secondary-foreground: 215 18% 16%;
+  --muted: 217 16% 92%;
+  --muted-foreground: 214 14% 46%;
+  --accent: 345 76% 59%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 10 86% 61%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 20% 88%;
+  --input: 217 16% 95%;
+  --ring: 154 58% 50%;
+  --radius: 1rem;
+  --shadow: 0 30px 60px rgba(15, 23, 42, 0.08);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-html {
-  background-color: hsl(var(--background));
+.dark {
+  color-scheme: dark;
+  --background: 217 20% 12%;
+  --foreground: 214 18% 96%;
+  --card: 217 18% 16%;
+  --card-foreground: 214 18% 96%;
+  --popover: 217 18% 20%;
+  --popover-foreground: 214 18% 96%;
+  --primary: 155 60% 65%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 42 96% 72%;
+  --secondary-foreground: 214 18% 96%;
+  --muted: 215 14% 22%;
+  --muted-foreground: 215 16% 72%;
+  --accent: 345 74% 65%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 10 86% 67%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 217 16% 26%;
+  --input: 217 16% 18%;
+  --ring: 155 60% 65%;
+  --shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
 }
 
-body {
-  margin: 0;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  /* Using a mono-spaced font for numbers feels more like a real "Meter System" */
-  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-* {
-  box-sizing: border-box;
-  border-color: hsl(var(--border));
+  html {
+    scroll-behavior: smooth;
+    min-height: 100%;
+    background: hsl(var(--background));
+  }
+
+  body {
+    min-height: 100vh;
+    margin: 0;
+    font-family: var(--font-sans);
+    background: radial-gradient(circle at top left, rgba(84, 255, 171, 0.14), transparent 25%),
+      radial-gradient(circle at bottom right, rgba(255, 111, 97, 0.14), transparent 30%),
+      hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.24);
+    color: hsl(var(--primary-foreground));
+  }
 }
 
 @layer components {
-  .metric-card {
-    border-radius: var(--radius);
+  .metric-card,
+  .card {
+    border-radius: 1rem;
     border: 1px solid hsl(var(--border));
-    background: linear-gradient(145deg, hsl(var(--card)), hsl(var(--background)));
-    padding: 1.25rem;
-    position: relative;
-    overflow: hidden;
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    padding: 1.5rem;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+    box-shadow: var(--shadow);
   }
 
-  /* Industrial look: subtle top-glow instead of a generic hover shadow */
-  .metric-card::before {
+  .metric-card::before,
+  .card::before {
     content: "";
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.3), transparent);
+    inset: 0;
+    pointer-events: none;
   }
 
-  .metric-card:hover {
-    border-color: hsl(var(--primary) / 0.4);
-    background-color: hsl(var(--card));
-  }
-
-  .metric-card {
-  border-radius: var(--radius);
-  border: 1px solid hsl(var(--border));
-  background: linear-gradient(
-    145deg,
-    hsl(var(--card)),
-    hsl(var(--background))
-  );
-  padding: 1.25rem;
-  transition: all 0.3s ease;
-}
-
-.metric-card:hover {
-  transform: translateY(-4px);
-  border-color: hsl(var(--primary));
-  box-shadow: 0 10px 30px rgba(0, 200, 255, 0.2);
-}
-  .chart-card {
-    border-radius: var(--radius);
-    border: 1px solid hsl(var(--border));
-    background-color: hsl(var(--card));
-    padding: 1.5rem;
+  .metric-card:hover,
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 28px 65px rgba(15, 23, 42, 0.14);
+    border-color: hsl(var(--primary) / 0.35);
   }
 
   .glass-effect {
-    background-color: hsl(var(--card) / 0.85);
-    backdrop-filter: blur(12px);
+    border-radius: 1rem;
     border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card) / 0.88);
+    backdrop-filter: blur(14px);
+  }
+
+  .theme-button {
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card));
+    padding: 0.65rem 1rem;
+    color: hsl(var(--foreground));
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .theme-button:hover {
+    background-color: hsl(var(--border));
+    transform: translateY(-1px);
+  }
+
+  input[type='range'] {
+    appearance: none;
+    width: 100%;
+    background: transparent;
+  }
+
+  input[type='range']::-webkit-slider-runnable-track {
+    height: 0.75rem;
+    border-radius: 9999px;
+    background: hsl(var(--border));
+  }
+
+  input[type='range']::-webkit-slider-thumb {
+    appearance: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 9999px;
+    background: hsl(var(--primary));
+    border: 3px solid hsl(var(--card));
+    margin-top: -0.25rem;
+  }
+
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(var(--ring), 0.18);
   }
 }
 
-/* Updated animations to feel more "mechanical" and fast */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideRight { from { transform: translateX(-10px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
 
 @layer utilities {
-  .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-  .animate-slide-right { animation: slideRight 0.4s cubic-bezier(0, 0, 0.2, 1); }
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+  .animate-slide-right {
+    animation: slideRight 0.4s cubic-bezier(0, 0, 0.2, 1);
+  }
 
-  /* Removed blue - replaced with technical colors */
-  .border-voltage { border-left: 4px solid hsl(var(--accent)); }  /* Amber */
-  .border-current { border-left: 4px solid hsl(158 64% 52%); }   /* Emerald */
-  .border-power   { border-left: 4px solid hsl(0 75% 50%); }     /* Crimson */
-  .border-energy  { border-left: 4px solid hsl(260 50% 60%); }   /* Muted Purple */
+  .border-voltage {
+    border-left: 4px solid hsl(var(--accent));
+  }
+  .border-current {
+    border-left: 4px solid hsl(158 64% 52%);
+  }
+  .border-power {
+    border-left: 4px solid hsl(0 75% 50%);
+  }
+  .border-energy {
+    border-left: 4px solid hsl(260 50% 60%);
+  }
 }
