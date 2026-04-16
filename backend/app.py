@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from db import init_db, get_db, close_db
@@ -203,6 +204,10 @@ def signup():
 
     email = data.get("email")
     password = data.get("password")
+    name = data.get("name")
+    phone = data.get("phone")
+    location = data.get("location")
+    meter_id = data.get("meterId")
 
     if not email or not password:
         return jsonify({"error": "Missing fields"}), 400
@@ -219,13 +224,117 @@ def signup():
 
     hashed = hash_password(password)
 
-    db.execute(
-        "INSERT INTO users (email, password) VALUES (?, ?)",
-        (email, hashed)
+    cursor = db.execute(
+        "INSERT INTO users (email, password, name, phone, location, meter_id) VALUES (?, ?, ?, ?, ?, ?)",
+        (email, hashed, name, phone, location, meter_id)
     )
     db.commit()
+    user_id = cursor.lastrowid
 
-    return jsonify({"message": "Signup success"})
+    return jsonify({
+        "message": "Signup success",
+        "user": {"id": user_id, "email": email, "name": name, "phone": phone, "location": location, "meterId": meter_id}
+    })
+
+
+# -------------------------
+# INSIGHTS
+# -------------------------
+@app.route("/api/insights")
+def insights():
+    db = get_db()
+
+    live_row = db.execute(
+        "SELECT * FROM readings ORDER BY timestamp DESC LIMIT 1"
+    ).fetchone()
+
+    if not live_row:
+        return jsonify({"error": "No data"}), 404
+
+    avg_power = db.execute(
+        "SELECT AVG(power) as avg_power FROM readings"
+    ).fetchone()["avg_power"] or 0.0
+
+    latest_units = live_row["energy_units"]
+    cost = calculate_cost(latest_units)
+
+    forecast_units = round(((avg_power + live_row["power"]) / 2) / 1000 * 24, 3)
+    forecast_cost = calculate_cost(forecast_units)
+
+    status = "normal"
+    if live_row["power"] > 2000 or avg_power > 1800:
+        status = "high"
+
+    if live_row["power"] > 2500:
+        status = "anomaly"
+
+    weather_conditions = [
+        {"condition": "Sunny", "description": "Clear skies and mild temperatures."},
+        {"condition": "Partly Cloudy", "description": "Some clouds with bright periods."},
+        {"condition": "Cloudy", "description": "Overcast with light winds."},
+        {"condition": "Showers", "description": "Light rain showers expected."},
+        {"condition": "Thunderstorms", "description": "Possible storms and higher humidity."},
+    ]
+
+    weather = []
+    now = datetime.now()
+    for i in range(1, 4):
+        forecast = weather_conditions[i % len(weather_conditions)]
+        weather.append({
+            "day": (now + timedelta(days=i)).strftime("%A"),
+            "condition": forecast["condition"],
+            "description": forecast["description"],
+            "high": 28 + i,
+            "low": 18 + i,
+        })
+
+    suggestions = [
+        "Shift high-power appliances to off-peak hours.",
+        "Check the meter and connected devices for unexpected load.",
+        "Schedule charging or heavy appliances for late night hours.",
+    ]
+
+    notifications = [
+        "If usage stays high, your daily bill could increase significantly.",
+        "A high-usage alert may trigger if power remains above threshold.",
+    ]
+
+    if status == "normal":
+        suggestions.insert(0, "Your system is stable. Keep monitoring for sudden spikes.")
+        notifications = ["No urgent alerts detected. Continue normal operations."]
+
+    if status == "high":
+        suggestions.insert(0, "Reduce heavy loads this evening to avoid surging consumption.")
+        notifications.insert(0, "Current power usage is above the preferred threshold.")
+
+    recommendation = (
+        "Reduce heavy load now and shift appliances to off-peak hours."
+        if status != "normal"
+        else "Keep monitoring thresholds and maintain current usage levels."
+    )
+
+    return jsonify({
+        "live": format_reading(live_row),
+        "summary": {
+            "total_units": latest_units,
+            "total_bill": cost,
+            "average_power": round(avg_power, 2),
+        },
+        "forecast": {
+            "next_24h_units": forecast_units,
+            "next_24h_cost": forecast_cost,
+            "risk_level": status,
+        },
+        "weather": weather,
+        "suggestions": suggestions,
+        "notifications": notifications,
+        "status": status,
+        "message": (
+            "High usage detected. Take action to reduce load." if status != "normal"
+            else "Energy use is within expected ranges."
+        ),
+        "recommendation": recommendation,
+    })
 
 
 # -------------------------
@@ -250,7 +359,14 @@ def login():
 
     return jsonify({
         "message": "Login success",
-        "user": {"id": user["id"], "email": user["email"]}
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+            "name": user["name"],
+            "phone": user["phone"],
+            "location": user["location"],
+            "meterId": user["meter_id"]
+        }
     })
 
 

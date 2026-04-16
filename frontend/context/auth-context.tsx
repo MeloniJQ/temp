@@ -1,6 +1,7 @@
-'use client'
+ 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { apiFetch } from '@/lib/api'
 
 export interface User {
   id: string
@@ -15,6 +16,14 @@ interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
+  signup: (payload: {
+    email: string
+    password: string
+    name: string
+    phone: string
+    location: string
+    meterId: string
+  }) => Promise<void>
   logout: () => void
   updateDailyLimit: (limit: number) => void
 }
@@ -25,7 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load user from localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('smartgrid_user')
     if (storedUser) {
@@ -34,23 +42,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false)
   }, [])
 
+  const persistUser = (userData: User) => {
+    setUser(userData)
+    localStorage.setItem('smartgrid_user', JSON.stringify(userData))
+  }
+
   const login = async (email: string, password: string) => {
     setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500))
 
-    // Mock user data
-    const mockUser: User = {
-      id: '1',
-      email,
-      name: email.split('@')[0],
-      meterId: 'MTR-2024-001',
-      location: 'New Delhi, India',
+    const result = await apiFetch<{ message: string; user: { id: string; email: string; name?: string; phone?: string; location?: string; meterId?: string } }>('/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+
+    const userData: User = {
+      id: result.user.id,
+      email: result.user.email,
+      name: result.user.name || email.split('@')[0],
+      location: result.user.location || 'Unknown',
+      meterId: result.user.meterId || 'MTR-2024-001',
+      dailyLimit: 50, // Default value, could be stored in backend later
+    }
+
+    persistUser(userData)
+    setIsLoading(false)
+  }
+
+  const signup = async ({ email, password, name, phone, location, meterId }: {
+    email: string
+    password: string
+    name: string
+    phone: string
+    location: string
+    meterId: string
+  }) => {
+    setIsLoading(true)
+
+    const result = await apiFetch<{ message: string; user: { id: string; email: string; name?: string; phone?: string; location?: string; meterId?: string } }>('/signup', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name, phone, location, meterId }),
+    })
+
+    const userData: User = {
+      id: result.user.id,
+      email: result.user.email,
+      name: result.user.name || name,
+      meterId: result.user.meterId || meterId,
+      location: result.user.location || location,
       dailyLimit: 50,
     }
 
-    setUser(mockUser)
-    localStorage.setItem('smartgrid_user', JSON.stringify(mockUser))
+    persistUser(userData)
     setIsLoading(false)
   }
 
@@ -62,13 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateDailyLimit = (limit: number) => {
     if (user) {
       const updatedUser = { ...user, dailyLimit: limit }
-      setUser(updatedUser)
-      localStorage.setItem('smartgrid_user', JSON.stringify(updatedUser))
+      persistUser(updatedUser)
     }
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, updateDailyLimit }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateDailyLimit }}>
       {children}
     </AuthContext.Provider>
   )
