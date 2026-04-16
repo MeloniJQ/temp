@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+<<<<<<< HEAD
 import { useTheme } from 'next-themes'
+=======
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
 import { useAuth } from '@/context/auth-context'
 import { Header } from '@/components/header'
 import { Moon, Sun } from 'lucide-react'
 
 export default function SettingsPage() {
   const { user, isLoading, updateDailyLimit } = useAuth()
+<<<<<<< HEAD
   const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [dailyLimit, setDailyLimit] = useState<number>(50)
@@ -18,6 +22,12 @@ export default function SettingsPage() {
   useEffect(() => {
     setMounted(true)
   }, [])
+=======
+  const router = useRouter()
+  const [dailyLimit, setDailyLimit] = useState<number>(50)
+  const [isDarkMode, setIsDarkMode] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -35,7 +45,11 @@ export default function SettingsPage() {
     setIsSaving(false)
   }
 
+<<<<<<< HEAD
   if (!user || !mounted) {
+=======
+  if (!user) {
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
     return null
   }
 
@@ -93,12 +107,21 @@ export default function SettingsPage() {
           <h2 className="text-lg font-semibold text-foreground mb-4">Appearance</h2>
 
           <div className="space-y-3">
+<<<<<<< HEAD
                 <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-border/50 cursor-pointer transition-colors">
               <input
                 type="radio"
                 name="theme"
                 checked={theme === 'dark'}
                 onChange={() => setTheme('dark')}
+=======
+            <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-border/50 cursor-pointer transition-colors">
+              <input
+                type="radio"
+                name="theme"
+                checked={isDarkMode}
+                onChange={() => setIsDarkMode(true)}
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
                 className="w-4 h-4"
               />
               <Moon size={18} className="text-muted-foreground" />
@@ -112,16 +135,25 @@ export default function SettingsPage() {
               <input
                 type="radio"
                 name="theme"
+<<<<<<< HEAD
                 checked={theme === 'light'}
                 onChange={() => setTheme('light')}
                 className="w-4 h-4 accent-orange-400"
               />
               <Sun size={18} className={theme === 'light' ? "text-orange-500" : "text-slate-400"} />
+=======
+                checked={!isDarkMode}
+                onChange={() => setIsDarkMode(false)}
+                className="w-4 h-4 accent-orange-400" 
+              />
+              <Sun size={18} className={!isDarkMode ? "text-orange-500" : "text-slate-400"} />
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
               <div>
                 <p className="text-sm font-medium text-slate-700">Light Mode</p>
                 <p className="text-xs text-slate-500">Standard viewing experience</p>
               </div>
             </label>
+<<<<<<< HEAD
             <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-100/80 cursor-pointer transition-all duration-300 active:scale-[0.98]">
               <input
                 type="radio"
@@ -138,6 +170,8 @@ export default function SettingsPage() {
                 <p className="text-xs text-slate-500">Follow OS theme preference</p>
               </div>
             </label>
+=======
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
           </div>
         </div>
 

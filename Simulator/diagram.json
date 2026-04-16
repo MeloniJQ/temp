@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "author": "Anonymous maker",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 76.8, "left": -4.76, "attrs": {} },
+    { "type": "wokwi-lcd1602", "id": "lcd1", "top": -92.57, "left": -204.8, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "pot1", "top": -49.3, "left": -336.2, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:GND.1", "lcd1:VSS", "black", [ "h-172.65", "v-182.4" ] ],
+    [ "lcd1:VDD", "esp:5V", "green", [ "v0" ] ],
+    [ "pot1:VCC", "esp:5V", "red", [ "v0" ] ],
+    [ "pot1:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "lcd1:RS", "esp:14", "green", [ "v172.8", "h144.3" ] ],
+    [ "lcd1:RW", "esp:GND.1", "green", [ "v0" ] ],
+    [ "lcd1:E", "esp:27", "green", [ "v0" ] ],
+    [ "lcd1:D4", "esp:26", "green", [ "v0" ] ],
+    [ "lcd1:D5", "esp:25", "green", [ "v0" ] ],
+    [ "lcd1:D6", "esp:18", "green", [ "v0" ] ],
+    [ "lcd1:D7", "esp:19", "green", [ "v0" ] ],
+    [ "lcd1:A", "esp:5V", "green", [ "v0" ] ],
+    [ "lcd1:K", "esp:GND.1", "green", [ "v0" ] ],
+    [ "pot1:SIG", "esp:34", "green", [ "v124.8", "h297.2" ] ]
+  ],
+  "dependencies": {}
+}

@@ -1,7 +1,13 @@
+<<<<<<< HEAD
  'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
+=======
+'use client'
+
+import React, { createContext, useContext, useState, useEffect } from 'react'
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
 
 export interface User {
   id: string
@@ -16,6 +22,7 @@ interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
+<<<<<<< HEAD
   signup: (payload: {
     email: string
     password: string
@@ -24,6 +31,8 @@ interface AuthContextType {
     location: string
     meterId: string
   }) => Promise<void>
+=======
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
   logout: () => void
   updateDailyLimit: (limit: number) => void
 }
@@ -34,6 +43,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+<<<<<<< HEAD
+=======
+  // Load user from localStorage on mount
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
   useEffect(() => {
     const storedUser = localStorage.getItem('smartgrid_user')
     if (storedUser) {
@@ -42,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false)
   }, [])
 
+<<<<<<< HEAD
   const persistUser = (userData: User) => {
     setUser(userData)
     localStorage.setItem('smartgrid_user', JSON.stringify(userData))
@@ -93,6 +107,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     persistUser(userData)
+=======
+  const login = async (email: string, password: string) => {
+    setIsLoading(true)
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 500))
+
+    // Mock user data
+    const mockUser: User = {
+      id: '1',
+      email,
+      name: email.split('@')[0],
+      meterId: 'MTR-2024-001',
+      location: 'New Delhi, India',
+      dailyLimit: 50,
+    }
+
+    setUser(mockUser)
+    localStorage.setItem('smartgrid_user', JSON.stringify(mockUser))
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
     setIsLoading(false)
   }
 
@@ -104,12 +137,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateDailyLimit = (limit: number) => {
     if (user) {
       const updatedUser = { ...user, dailyLimit: limit }
+<<<<<<< HEAD
       persistUser(updatedUser)
+=======
+      setUser(updatedUser)
+      localStorage.setItem('smartgrid_user', JSON.stringify(updatedUser))
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
     }
   }
 
   return (
+<<<<<<< HEAD
     <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateDailyLimit }}>
+=======
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateDailyLimit }}>
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
       {children}
     </AuthContext.Provider>
   )
@@ -121,4 +163,8 @@ export function useAuth() {
     throw new Error('useAuth must be used within AuthProvider')
   }
   return context
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 009318d1535891a9acec68ec599f80072a13e2d1
